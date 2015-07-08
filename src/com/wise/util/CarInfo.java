@@ -13,7 +13,21 @@ public class CarInfo{
 	private int CarStatus; //车辆状态
 	private String fuel; //油量
 	
+	private String lastStopTime; //熄火时间
+	private int uniStatus[]; //返回的状态码
 	
+	public int[] getUniStatus() {
+		return uniStatus;
+	}
+	public void setUniStatus(int[] uniStatus) {
+		this.uniStatus = uniStatus;
+	}
+	public String getLastStopTime() {
+		return lastStopTime;
+	}
+	public void setLastStopTime(String lastStopTime) {
+		this.lastStopTime = lastStopTime;
+	}
 	public String getFuel() {
 		return fuel;
 	}

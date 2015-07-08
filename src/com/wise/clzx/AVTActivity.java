@@ -437,6 +437,8 @@ public class AVTActivity extends MapActivity implements IXListViewListener{
 			carinfos = new ArrayList<CarInfo>();
 			carNums = new ArrayList<String>();
 			String url = Url + "customer/" + cust_id + "/vehicle?auth_code=" + auth_code + "&tree_path=" + contacterDatas.get(contacter_item).getTree_path() + "&mode=all&page_no=" + Car_Page + "&page_count=" + Car_Page_Number;
+			Log.i("AVTActivity", url);
+			
 			new Thread(new NetThread.GetDataThread(handler, url, GetContacterCar)).start();
 			if(listContacter.size() > 1){
 				s_contacter.setVisibility(View.VISIBLE);
@@ -463,6 +465,9 @@ public class AVTActivity extends MapActivity implements IXListViewListener{
 				Car_Page = 1;
 				Dialog = ProgressDialog.show(AVTActivity.this,getString(R.string.serach_pd_title),getString(R.string.serach_pd_context), true);
 				String url = Url + "customer/" + cust_id + "/vehicle?auth_code=" + auth_code + "&tree_path=" + contacterDatas.get(contacter_item).getTree_path() + "&mode=all&&page_no=" + Car_Page + "&page_count=" + Car_Page_Number;
+				
+				Log.i("AVTActivity", "onItemSelected"+url);
+				
 				new Thread(new NetThread.GetDataThread(handler, url, GetContacterCar)).start();
 			}
 			isSpinnerShow = true;
@@ -506,7 +511,17 @@ public class AVTActivity extends MapActivity implements IXListViewListener{
 					carInfo.setRcv_time(rcv_time);
 					carInfo.setMileage(jsonData.getString("mileage"));
 					carInfo.setFuel(jsonData.getString("fuel"));
+					
+					carInfo.setLastStopTime(jsonData.getString("last_stop_time"));
+					
 					JSONArray jsonArrayStatus = jsonData.getJSONArray("uni_status");
+					int[] uniStatus = new int[jsonArrayStatus.length()];
+					for(int s=0;s<uniStatus.length;s++){
+						uniStatus[s] = jsonArrayStatus.getInt(s);
+					}
+					carInfo.setUniStatus(uniStatus);
+					
+					
 		    		JSONArray jsonArrayAlerts = jsonData.getJSONArray("uni_alerts");
 		    		String status = ResolveData.getStatusDesc(rcv_time, gps_flag, speed, ResolveData.getUniStatusDesc(jsonArrayStatus), ResolveData.getUniAlertsDesc(jsonArrayAlerts));
 		    		carInfo.setMDTStatus(status);

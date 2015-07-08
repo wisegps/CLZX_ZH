@@ -1,6 +1,8 @@
 package com.wise.extend;
 
 import java.util.List;
+
+import com.BaseClass.ResolveData;
 import com.wise.clzx.R;
 import com.wise.util.CarInfo;
 import android.content.Context;
@@ -50,6 +52,7 @@ public class CarAdapter extends BaseAdapter {
 			holder.tv_new_Regnum = (TextView) convertView.findViewById(R.id.tv_new_Regnum);
 			holder.tv_new_time = (TextView) convertView.findViewById(R.id.tv_new_time);
 			holder.tv_new_content = (TextView)convertView.findViewById(R.id.tv_new_content);
+			holder.tv_status = (TextView)convertView.findViewById(R.id.tv_status);
 			convertView.setBackgroundColor(Color.TRANSPARENT);
 			convertView.setTag(holder);
 		}else{
@@ -74,7 +77,14 @@ public class CarAdapter extends BaseAdapter {
 		}
 		holder.tv_new_Regnum.setText(items.get(position).getObj_name().toString());
 		holder.tv_new_time.setText(ChangeTime(Rcv_time));
-		holder.tv_new_content.setText(items.get(position).getMDTStatus());		
+		holder.tv_new_content.setText(items.get(position).getMDTStatus());
+		
+		//ÅÐ¶ÏÆô¶¯Ï¨»ð
+		int [] status = items.get(position).getUniStatus();
+		String lastStopTime = items.get(position).getLastStopTime();
+		holder.tv_status.setText(ResolveData.getRunStopDesc(status,lastStopTime));
+		
+		
 		if(position == selectItem){
 			convertView.setBackgroundColor(Color.rgb(204, 204, 204));
 		}else{
@@ -84,7 +94,7 @@ public class CarAdapter extends BaseAdapter {
 	}
 	public class ViewHolder {
 		ImageView caro;
-		TextView tv_new_Regnum, tv_new_time ,tv_new_content;
+		TextView tv_new_Regnum, tv_new_time ,tv_new_content,tv_status;
 	}
 	public String ChangeTime(String Time){
 		try {

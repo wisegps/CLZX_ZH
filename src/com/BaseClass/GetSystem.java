@@ -1,7 +1,5 @@
 package com.BaseClass;
-/**
- * 公共类
- */
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -10,12 +8,15 @@ import java.security.MessageDigest;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.kobjects.base64.Base64;
+
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -30,7 +31,11 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.text.format.Time;
 import android.util.Log;
-import org.kobjects.base64.Base64;
+
+/**
+ * 公共类
+ */
+
 
 public class GetSystem {
 	private static String TAG = "GetSystem";
@@ -87,6 +92,35 @@ public class GetSystem {
 			return date.substring(0, 10);
 		}
 	}
+	/**
+	 * 判断熄火时间
+	 */
+	public static long getStopDuration(String lastStopTime){
+		
+		//lastStopTime = "2015-07-08T10:30:00.000Z";
+		String date = lastStopTime.substring(0, lastStopTime.length() - 5).replace("T", " ");
+		Calendar calendar = Calendar.getInstance();
+		try {
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			java.util.Date begin = sdf.parse(date);	
+			Log.i("GetSystem", begin.toLocaleString()+"");
+			Log.i("GetSystem", begin.toGMTString());
+			calendar.setTime(begin);
+			calendar.add(Calendar.HOUR_OF_DAY, 8);
+			long beginMillis = calendar.getTimeInMillis();
+			long current= System.currentTimeMillis();
+			Log.i("GetSystem", current+"");
+			long dur = current - beginMillis;
+			
+			long min = dur/1000/60;
+			return min;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return 0;
+	}
+	
+	
 	/**
 	 * 获取当前系统时间
 	 * @return yyyy-mm-dd hh:mm:ss
