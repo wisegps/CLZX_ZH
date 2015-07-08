@@ -78,6 +78,7 @@ import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -1330,6 +1331,7 @@ public class AVTActivity extends MapActivity implements IXListViewListener{
 
         GetMyLocation();
 	} 
+
     /**
 	 * 初始化数据
 	 */
