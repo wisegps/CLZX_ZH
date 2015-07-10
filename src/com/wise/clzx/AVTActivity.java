@@ -155,7 +155,7 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 
 	LocationClient locationClient; // 定位
 	MKSearch mMKSearch; // 查找文职
-	
+
 	public MKSearch mMKSearchAddress; // 查找文职
 	BMapManager mBMapMan = null;
 	MapView mMapView;
@@ -218,6 +218,13 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	 * 程序是否在后台
 	 */
 	boolean isPause = false;
+
+	/**
+	 * 实时路况信息
+	 * 
+	 * 
+	 */
+	boolean isTraffic = false;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -305,41 +312,41 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 				LocusNow(PROGRESS);
 				break;
 			case R.id.iv_map_traffic_set:// 路况显示
-				if (((Boolean) v.getTag()) == true) {
-
-					((ImageView) v)
-							.setImageResource(R.drawable.main_icon_roadcondition_off);
-					v.setTag(false);
-
-					handler.post(new Runnable() {
-						@Override
-						public void run() {
-							mMapView.setTraffic(false);
-							Toast.makeText(AVTActivity.this, "实时路况已关闭",
-									Toast.LENGTH_SHORT).show();
-						}
-
-					});
-				} else {
-					((ImageView) v)
-							.setImageResource(R.drawable.main_icon_roadcondition_on);
-					v.setTag(true);
-					handler.post(new Runnable() {
-						@Override
-						public void run() {
-							mMapView.setTraffic(true);
-							Toast.makeText(AVTActivity.this, "实时路况已打开",
-									Toast.LENGTH_SHORT).show();
-						}
-
-					});
-
-				}
+				setTraffic();
 				break;
 
 			}
 		}
 	};
+
+	public void setTraffic() {
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				ImageView img = (ImageView) AVTActivity.this
+						.findViewById(R.id.iv_map_traffic_set);
+				if (isTraffic == true) {
+					img.setImageResource(R.drawable.main_icon_roadcondition_off);
+					isTraffic = false;
+					mMapView.setTraffic(isTraffic);
+					mMapView.postInvalidateDelayed(100);
+					Toast.makeText(AVTActivity.this, "实时路况已关闭",
+							Toast.LENGTH_SHORT).show();
+				} else {
+					img.setImageResource(R.drawable.main_icon_roadcondition_on);
+					isTraffic = true; 
+					mMapView.setTraffic(isTraffic);
+					mMapView.postInvalidateDelayed(100);
+					Toast.makeText(AVTActivity.this, "实时路况已打开",
+							Toast.LENGTH_SHORT).show();
+				}
+				
+			
+			}
+
+		});
+
+	}
 
 	Handler handler = new Handler() {
 		@Override
@@ -827,10 +834,10 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 					drawable);
 		}
 
-		String snippet = lastCarInfo.getGps_time() + ",," + duration ;
+		String snippet = lastCarInfo.getGps_time() + ",," + duration;
 
 		OverlayItem overLayItem = new OverlayItem(lastStopPoint, "t", snippet);
-		
+
 		carParkItemOverlay.addOverLay(overLayItem);
 		mapOverLays.add(carParkItemOverlay);
 
@@ -1697,12 +1704,9 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 		mMKSearch = new MKSearch();
 		mMKSearch.init(mBMapMan, new MySearhListener());
 
-		
 		mMKSearchAddress = new MKSearch();
 		mMKSearchAddress.init(mBMapMan, new ParkSearhListener());
 
-		
-		
 		GetMyLocation();
 	}
 
@@ -1895,69 +1899,65 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 		public void onReceivePoi(BDLocation arg0) {
 		}
 	}
-	
-	
-	 class ParkSearhListener implements MKSearchListener {
 
-			
-			@Override
-			public void onGetAddrResult(MKAddrInfo arg0, int arg1) {
-				if(carParkItemOverlay!=null){
-					carParkItemOverlay.setAddress(arg0.strAddr);
-				}
-				
+	class ParkSearhListener implements MKSearchListener {
+
+		@Override
+		public void onGetAddrResult(MKAddrInfo arg0, int arg1) {
+			if (carParkItemOverlay != null) {
+				carParkItemOverlay.setAddress(arg0.strAddr);
 			}
-
-			@Override
-			public void onGetBusDetailResult(MKBusLineResult arg0, int arg1) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void onGetDrivingRouteResult(MKDrivingRouteResult arg0, int arg1) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void onGetPoiDetailSearchResult(int arg0, int arg1) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void onGetPoiResult(MKPoiResult arg0, int arg1, int arg2) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void onGetRGCShareUrlResult(String arg0, int arg1) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void onGetSuggestionResult(MKSuggestionResult arg0, int arg1) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void onGetTransitRouteResult(MKTransitRouteResult arg0, int arg1) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void onGetWalkingRouteResult(MKWalkingRouteResult arg0, int arg1) {
-				// TODO Auto-generated method stub
-				
-			}
-
 
 		}
 
+		@Override
+		public void onGetBusDetailResult(MKBusLineResult arg0, int arg1) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void onGetDrivingRouteResult(MKDrivingRouteResult arg0, int arg1) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void onGetPoiDetailSearchResult(int arg0, int arg1) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void onGetPoiResult(MKPoiResult arg0, int arg1, int arg2) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void onGetRGCShareUrlResult(String arg0, int arg1) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void onGetSuggestionResult(MKSuggestionResult arg0, int arg1) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void onGetTransitRouteResult(MKTransitRouteResult arg0, int arg1) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void onGetWalkingRouteResult(MKWalkingRouteResult arg0, int arg1) {
+			// TODO Auto-generated method stub
+
+		}
+
+	}
 
 }
