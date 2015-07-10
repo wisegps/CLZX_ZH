@@ -101,7 +101,7 @@ public class GetSystem {
 	/**
 	 * 判断熄火时间
 	 */
-	public static long getStopDuration(String lastStopTime) {
+	public static String getStopDuration(String lastStopTime) {
 
 		// lastStopTime = "2015-07-08T10:30:00.000Z";
 		String date = lastStopTime.substring(0, lastStopTime.length() - 5)
@@ -117,14 +117,25 @@ public class GetSystem {
 			long beginMillis = calendar.getTimeInMillis();
 			long current = System.currentTimeMillis();
 			Log.i("GetSystem", current + "");
-			long dur = current - beginMillis;
-
-			long min = dur / 1000 / 60;
-			return min;
+			long between = (current - beginMillis)/1000;//秒数
+			StringBuffer desc = new StringBuffer();
+			   long day=between/(24*3600);
+			   long hour=between%(24*3600)/3600;
+			   long minute=between%3600/60;
+			   if(day>0){
+				   desc.append(day+"天") ;
+			   }
+			   if(hour>0){
+				   desc.append(hour+"时") ;
+			   }
+			   if(minute>0){
+				   desc.append(minute+"分") ;
+			   }
+			return desc.toString();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return 0;
+		return "";
 	}
 
 	/**
