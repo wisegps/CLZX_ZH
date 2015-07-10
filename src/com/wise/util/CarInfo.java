@@ -4,6 +4,7 @@ public class CarInfo{
 	private String MDTStatus;   //车辆显示状态
 	private String ObjectID;  //车辆标识
 	private String Rcv_time; //时间
+	private String Gps_time; //时间
 	private String Lon; //位置
 	private String Lat; //位置
 	private int Speed; //判断状态
@@ -16,6 +17,12 @@ public class CarInfo{
 	private String lastStopTime; //熄火时间
 	private int uniStatus[]; //返回的状态码
 	
+	public String getGps_time() {
+		return Gps_time;
+	}
+	public void setGps_time(String gps_time) {
+		Gps_time = gps_time;
+	}
 	public int[] getUniStatus() {
 		return uniStatus;
 	}

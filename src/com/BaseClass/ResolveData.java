@@ -109,7 +109,28 @@ public class ResolveData {
 		
 		return str;
 	}
-
+	
+	/**
+	 * 是否包含运行状态
+	 * @param status
+	 * @return
+	 */
+	public static boolean hasStatusRun(int[] status) {
+		
+		boolean b = false;
+		if(status == null || status.length == 0){
+			return b;
+		}
+		for (int i = 0; i < status.length; i++) {
+			int s = status[i];
+			if (s == STATUS_RUN) {
+				b = true;
+				break;
+			} 
+		}
+		return b;
+	}
+	
 	static String ALERT_SOS = "12289";
 	static String ALERT_OVERSPEED = "12290";
 	static String ALERT_VIRBRATE = "12291";
