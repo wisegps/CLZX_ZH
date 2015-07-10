@@ -320,11 +320,11 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	};
 
 	public void setTraffic() {
-		handler.post(new Runnable() {
+		new Handler().post(new Runnable() {
 			@Override
 			public void run() {
-				ImageView img = (ImageView) AVTActivity.this
-						.findViewById(R.id.iv_map_traffic_set);
+				System.gc();
+				ImageView img = (ImageView) AVTActivity.this.findViewById(R.id.iv_map_traffic_set);
 				if (isTraffic == true) {
 					img.setImageResource(R.drawable.main_icon_roadcondition_off);
 					isTraffic = false;
@@ -834,7 +834,7 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 					drawable);
 		}
 
-		String snippet = lastCarInfo.getGps_time() + ",," + duration;
+		String snippet = lastCarInfo.getGps_time() + ",," + GetSystem.duration2String(duration*60);
 
 		OverlayItem overLayItem = new OverlayItem(lastStopPoint, "t", snippet);
 

@@ -69,7 +69,7 @@ public class CarParkItemizedOverlay extends ItemizedOverlay<OverlayItem> {
 				
 				String snippet[] =item.getSnippet().split(",,");
 				tvBeginTime.setText("开始时间："+snippet[0]);
-				tvStayTime.setText("停留时间："+snippet[1]+"分钟");
+				tvStayTime.setText("停留时间："+snippet[1]);
 				
 				geoLP.point = mapOverLays.get(index).getPoint();
 				

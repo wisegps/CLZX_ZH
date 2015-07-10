@@ -116,8 +116,11 @@ public class GetSystem {
 			calendar.add(Calendar.HOUR_OF_DAY, 8);
 			long beginMillis = calendar.getTimeInMillis();
 			long current = System.currentTimeMillis();
-			Log.i("GetSystem", current + "");
 			long between = (current - beginMillis)/1000;//秒数
+			
+			Log.i("GetSystem", between + "");
+			
+			
 			StringBuffer desc = new StringBuffer();
 			   long day=between/(24*3600);
 			   long hour=between%(24*3600)/3600;
@@ -138,6 +141,23 @@ public class GetSystem {
 		return "";
 	}
 
+	
+	public static String duration2String(long between){
+		StringBuffer desc = new StringBuffer();
+		   long day=between/(24*3600);
+		   long hour=between%(24*3600)/3600;
+		   long minute=between%3600/60;
+		   if(day>0){
+			   desc.append(day+"天") ;
+		   }
+		   if(hour>0){
+			   desc.append(hour+"时") ;
+		   }
+		   if(minute>0){
+			   desc.append(minute+"分") ;
+		   }
+		return desc.toString();
+	}
 	/**
 	 * 判断熄火时间
 	 */

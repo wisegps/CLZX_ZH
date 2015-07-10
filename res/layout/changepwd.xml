@@ -16,7 +16,7 @@
 		android:password="true"
 		android:textSize="18sp"/>
 	<TextView 
-		android:id="@+id/PassWord_TV" 
+		android:id="@+id/PassWord_TV0" 
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content" 
 		android:text="@string/newPassWord"/>
@@ -27,7 +27,7 @@
 		android:password="true"
 		android:textSize="18sp"/>
 	<TextView 
-		android:id="@+id/PassWord_TV" 
+		android:id="@+id/PassWord_TV1" 
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content" 
 		android:text="@string/newPassWordToo"/>
