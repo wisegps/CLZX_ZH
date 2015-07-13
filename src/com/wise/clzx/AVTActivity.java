@@ -154,9 +154,9 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	GeoPoint myLocation; // 当前坐标
 
 	LocationClient locationClient; // 定位
-	MKSearch mMKSearch; // 查找文职
+	public MKSearch mMKSearch; // 查找文职
 
-	public MKSearch mMKSearchAddress; // 查找文职
+//	public MKSearch mMKSearchAddress; // 查找文职
 	BMapManager mBMapMan = null;
 	MapView mMapView;
 	MapController mMapController;
@@ -264,6 +264,7 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 				break;
 			case R.id.iv_Me:// 定位到当前位置
 				try {
+					mMKSearch.reverseGeocode(Point);
 					mMapController.animateTo(myLocation);
 				} catch (Exception e) {
 					// 没有定位信息
@@ -1704,8 +1705,8 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 		mMKSearch = new MKSearch();
 		mMKSearch.init(mBMapMan, new MySearhListener());
 
-		mMKSearchAddress = new MKSearch();
-		mMKSearchAddress.init(mBMapMan, new ParkSearhListener());
+//		mMKSearchAddress = new MKSearch();
+//		mMKSearchAddress.init(mBMapMan, new ParkSearhListener());
 
 		GetMyLocation();
 	}
@@ -1767,11 +1768,15 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	 * @param overlays
 	 */
 	private void ClearCarParkOverlay() {
+		
+		
+		
 		if (carParkItemOverlay != null) {
 			carParkItemOverlay.clear();
 			mapOverLays.remove(carParkItemOverlay);
 			carParkItemOverlay = null;
 		}
+		mMKSearch.reverseGeocode(Point);
 		System.gc();
 	}
 
@@ -1808,6 +1813,10 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 		public void onGetAddrResult(MKAddrInfo arg0, int arg1) {
 			if (arg0 != null) {
 				tv_address.setText(arg0.strAddr);
+				
+				if (carParkItemOverlay != null) {
+					carParkItemOverlay.setAddress(arg0.strAddr);
+				}
 			}
 		}
 

@@ -73,7 +73,7 @@ public class CarParkItemizedOverlay extends ItemizedOverlay<OverlayItem> {
 				
 				geoLP.point = mapOverLays.get(index).getPoint();
 				
-				parent.mMKSearchAddress.reverseGeocode(geoLP.point);
+				parent.mMKSearch.reverseGeocode(geoLP.point);
 				mapView.updateViewLayout(popView, geoLP);
 				popView.setVisibility(View.VISIBLE);
 				mapView.invalidate();
@@ -109,8 +109,11 @@ public class CarParkItemizedOverlay extends ItemizedOverlay<OverlayItem> {
 	
 	
 	public void setAddress(String address){
-		TextView tvAddressDesc= (TextView) popView.findViewById(R.id.tvAddressDesc);
-		tvAddressDesc.setText("Œª÷√£∫"+address);
+		if(popView!=null && popView.isShown()){
+			TextView tvAddressDesc= (TextView) popView.findViewById(R.id.tvAddressDesc);
+			tvAddressDesc.setText("Œª÷√£∫"+address);
+		}
+		
 	}
 	
 	public void clear(){
