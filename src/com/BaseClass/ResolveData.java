@@ -98,7 +98,11 @@ public class ResolveData {
 	}
 
 	public static String getRunStopDesc(int[] status,String lastStopTime) {
+		
 		String str = "Ï¨»ð" + GetSystem.getStopDuration(lastStopTime);
+		if(status == null){
+			return "";
+		}
 		for (int i = 0; i < status.length; i++) {
 			int s = status[i];
 			if (s == STATUS_RUN) {

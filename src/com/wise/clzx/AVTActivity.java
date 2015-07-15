@@ -591,16 +591,25 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	 */
 	private void JsonContacterCar(String str) {
 		try {
-			System.out.println(str);
+			Log.i("AVTActivity", "result:" + str);
 			JSONObject jsonObject = new JSONObject(str);
 			Car_Page_total = Integer
 					.valueOf(jsonObject.getString("page_total"));
 			JSONArray jsonArray = jsonObject.getJSONArray("data");
+			Log.i("AVTActivity", "json:" + jsonArray.length());
 			for (int i = 0; i < jsonArray.length(); i++) {
+				Log.i("AVTActivity", "json:" + i);
 				CarInfo carInfo = new CarInfo();
 				JSONObject json = jsonArray.getJSONObject(i);
+				
+				Log.i("AVTActivity", "json:" + json);
+				
+				
+				
 				carInfo.setObj_name(json.getString("obj_name"));
 				carInfo.setObjectID(json.getString("obj_id"));
+				
+				
 				if (json.optJSONObject("active_gps_data") == null) {
 					carInfo.setLat("0");
 					carInfo.setLon("0");
@@ -612,15 +621,20 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 					carInfo.setCarStatus(1);
 					carInfo.setFuel("0");
 				} else {
+					
 					JSONObject jsonData = json.getJSONObject("active_gps_data");
+					
+					
 					String rcv_time = GetSystem.ChangeTime(
 							jsonData.getString("rcv_time"), 0);
 					int gps_flag = Integer.valueOf(jsonData
 							.getString("gps_flag"));
 					int speed = (int) Double.parseDouble(jsonData
 							.getString("speed"));
-					carInfo.setLat(jsonData.getString("b_lat"));
-					carInfo.setLon(jsonData.getString("b_lon"));
+					
+					
+					carInfo.setLat(getNumString(jsonData,"b_lat"));
+					carInfo.setLon(getNumString(jsonData,"b_lon"));
 					carInfo.setDirect(jsonData.getString("direct"));
 					carInfo.setSpeed(speed);
 					carInfo.setRcv_time(rcv_time);
@@ -655,8 +669,21 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 			bindData();
 			ShowAllCar();
 		} catch (Exception e) {
+			Log.i("AVTActivity", "e:" +e.getLocalizedMessage());
+			e.printStackTrace();
+			
+		}
+	}
+	
+	public String getNumString(JSONObject jsonData,String key){
+		String str = "0";
+		try {
+			str = jsonData.getString(key);
+		} catch (JSONException e) {
+			str = "0";
 			e.printStackTrace();
 		}
+		return str;
 	}
 
 	/**
@@ -1796,6 +1823,8 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 					+ Car_Page_Number;
 			new Thread(new NetThread.GetDataThread(handler, url,
 					GetContacterCar)).start();
+			
+			Log.i("AVTActivity", "иою╜╪сть");
 		}
 	}
 

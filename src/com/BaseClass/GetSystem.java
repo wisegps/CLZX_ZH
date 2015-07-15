@@ -102,7 +102,10 @@ public class GetSystem {
 	 * ÅÐ¶ÏÏ¨»ðÊ±¼ä
 	 */
 	public static String getStopDuration(String lastStopTime) {
-
+		Log.i("AVTActivity", "lastStopTime:" + lastStopTime);
+		if(lastStopTime==null){
+			return "";
+		}
 		// lastStopTime = "2015-07-08T10:30:00.000Z";
 		String date = lastStopTime.substring(0, lastStopTime.length() - 5)
 				.replace("T", " ");
