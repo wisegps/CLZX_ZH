@@ -1304,6 +1304,13 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	private OnItemClickListener OICL = new OnItemClickListener() {
 		public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
 				long arg3) {
+			String Lat = carinfos.get((arg2 - 1)).getLat();
+			String Lon = carinfos.get((arg2 - 1)).getLon();
+			if(Lat.trim().equals("0") || Lon.trim().equals("0")){
+				Toast.makeText(AVTActivity.this, "暂无法读取位置信息", Toast.LENGTH_SHORT).show();
+				return ;
+			}
+			
 			flipper.setDisplayedChild(1);
 			ChooseCar((arg2 - 1), 1);
 		}
@@ -1317,6 +1324,7 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	 *            0，地图 1，列表
 	 */
 	public void ChooseCar(int arg, int where) {
+		
 		lv_cars.setSelection(arg); // 定位到对应行
 		carAdapter.setSelectItem(arg);
 		carAdapter.notifyDataSetInvalidated();
