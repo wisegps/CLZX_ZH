@@ -4,6 +4,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
@@ -156,7 +159,7 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	LocationClient locationClient; // 定位
 	public MKSearch mMKSearch; // 查找文职
 
-//	public MKSearch mMKSearchAddress; // 查找文职
+	// public MKSearch mMKSearchAddress; // 查找文职
 	BMapManager mBMapMan = null;
 	MapView mMapView;
 	MapController mMapController;
@@ -226,6 +229,14 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	 */
 	boolean isTraffic = false;
 
+	
+	/**
+	 * 
+	 * Timer 刷新车辆定时器
+	 * 
+	 */
+	
+	Timer timer = null;
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -325,7 +336,8 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 			@Override
 			public void run() {
 				System.gc();
-				ImageView img = (ImageView) AVTActivity.this.findViewById(R.id.iv_map_traffic_set);
+				ImageView img = (ImageView) AVTActivity.this
+						.findViewById(R.id.iv_map_traffic_set);
 				if (isTraffic == true) {
 					img.setImageResource(R.drawable.main_icon_roadcondition_off);
 					isTraffic = false;
@@ -335,14 +347,13 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 							Toast.LENGTH_SHORT).show();
 				} else {
 					img.setImageResource(R.drawable.main_icon_roadcondition_on);
-					isTraffic = true; 
+					isTraffic = true;
 					mMapView.setTraffic(isTraffic);
 					mMapView.postInvalidateDelayed(100);
 					Toast.makeText(AVTActivity.this, "实时路况已打开",
 							Toast.LENGTH_SHORT).show();
 				}
-				
-			
+
 			}
 
 		});
@@ -389,7 +400,8 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 				if (IsFristOnCreate) {
 					IsFristOnCreate = false;
 					// 开启刷新线程
-					new Thread(new UpdateMain()).start();
+					//new Thread(new UpdateMain()).start();
+					startTimer();
 				}
 				break;
 			case UPDATEMAIN:// 定时刷新所有车辆信息
@@ -407,6 +419,7 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 				}
 				break;
 			case GetRefreshData: // 解析更新数据并绑定
+				System.gc();
 				jsonRefreshData(msg.obj.toString().trim());
 				if (!IsLock) {// 如果在轨迹回访不刷新数据
 					if (popView != null) {
@@ -506,18 +519,26 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	 * @param str
 	 */
 	private void JsonContacter(String str) {
-		List<String> listContacter = new ArrayList<String>();
+		final List<String> listContacter = new ArrayList<String>();
 		try {
 			JSONObject jsonObject = new JSONObject(str);
 			JSONArray jsonArray = jsonObject.getJSONArray("data");
 			for (int i = 0; i < jsonArray.length(); i++) {
+
 				JSONObject json = jsonArray.getJSONObject(i);
 				ContacterData contacterData = new ContacterData();
 				contacterData.setCust_name(json.getString("cust_name"));
 				contacterData.setTree_path(json.getString("tree_path"));
 				contacterDatas.add(contacterData);
+				Log.i("AVTActivity", "添加一个用户" + json.getString("cust_name"));
 				listContacter.add(json.getString("cust_name"));
 			}
+			if (listContacter.size() >= 1) {
+				s_contacter.setVisibility(View.VISIBLE);
+			} else {
+				s_contacter.setVisibility(View.GONE);
+			}
+			Log.i("AVTActivity", "几个用户" + listContacter.size());
 			// 绑定spinner
 			android.widget.ArrayAdapter<String> Adapter = new android.widget.ArrayAdapter<String>(
 					getApplicationContext(),
@@ -525,6 +546,8 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 			Adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item); // 设置下拉列表的风格
 			s_contacter.setAdapter(Adapter);
 			s_contacter.setOnItemSelectedListener(onItemSelectedListener);
+			Adapter.notifyDataSetChanged();
+
 			// 获取用户下车辆数据
 			carinfos = new ArrayList<CarInfo>();
 			carNums = new ArrayList<String>();
@@ -533,15 +556,11 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 					+ contacterDatas.get(contacter_item).getTree_path()
 					+ "&mode=all&page_no=" + Car_Page + "&page_count="
 					+ Car_Page_Number;
-			Log.i("AVTActivity", url);
+			Log.i("AVTActivity", "用户下车辆" + url);
 
 			new Thread(new NetThread.GetDataThread(handler, url,
 					GetContacterCar)).start();
-			if (listContacter.size() > 1) {
-				s_contacter.setVisibility(View.VISIBLE);
-			} else {
-				s_contacter.setVisibility(View.GONE);
-			}
+
 		} catch (JSONException e) {
 			e.printStackTrace();
 			if (Dialog != null) {
@@ -601,15 +620,12 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 				Log.i("AVTActivity", "json:" + i);
 				CarInfo carInfo = new CarInfo();
 				JSONObject json = jsonArray.getJSONObject(i);
-				
+
 				Log.i("AVTActivity", "json:" + json);
-				
-				
-				
+
 				carInfo.setObj_name(json.getString("obj_name"));
 				carInfo.setObjectID(json.getString("obj_id"));
-				
-				
+
 				if (json.optJSONObject("active_gps_data") == null) {
 					carInfo.setLat("0");
 					carInfo.setLon("0");
@@ -621,28 +637,26 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 					carInfo.setCarStatus(1);
 					carInfo.setFuel("0");
 				} else {
-					
+
 					JSONObject jsonData = json.getJSONObject("active_gps_data");
-					
-					
+
 					String rcv_time = GetSystem.ChangeTime(
 							jsonData.getString("rcv_time"), 0);
 					int gps_flag = Integer.valueOf(jsonData
 							.getString("gps_flag"));
 					int speed = (int) Double.parseDouble(jsonData
 							.getString("speed"));
-					
-					
-					carInfo.setLat(getNumString(jsonData,"b_lat"));
-					carInfo.setLon(getNumString(jsonData,"b_lon"));
+
+					carInfo.setLat(getNumString(jsonData, "b_lat"));
+					carInfo.setLon(getNumString(jsonData, "b_lon"));
 					carInfo.setDirect(jsonData.getString("direct"));
 					carInfo.setSpeed(speed);
 					carInfo.setRcv_time(rcv_time);
 					carInfo.setMileage(jsonData.getString("mileage"));
 					carInfo.setFuel(jsonData.getString("fuel"));
 
-					carInfo.setLastStopTime(jsonData
-							.getString("last_stop_time"));
+					carInfo.setLastStopTime(getString(jsonData,
+							"last_stop_time"));
 
 					JSONArray jsonArrayStatus = jsonData
 							.getJSONArray("uni_status");
@@ -669,18 +683,38 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 			bindData();
 			ShowAllCar();
 		} catch (Exception e) {
-			Log.i("AVTActivity", "e:" +e.getLocalizedMessage());
+			Log.i("AVTActivity", "e:" + e.getLocalizedMessage());
 			e.printStackTrace();
-			
+
 		}
 	}
-	
-	public String getNumString(JSONObject jsonData,String key){
+
+	public String getNumString(JSONObject jsonData, String key) {
+		  boolean bool = jsonData.has(key);
+		   if(bool == false){
+			   return "0";
+		   }
 		String str = "0";
 		try {
 			str = jsonData.getString(key);
 		} catch (JSONException e) {
 			str = "0";
+			e.printStackTrace();
+		}
+		return str;
+	}
+
+	public String getString(JSONObject jsonData, String key) {
+		
+	   boolean bool = jsonData.has(key);
+	   if(bool == false){
+		   return "";
+	   }
+		String str = "";
+		try {
+			str = jsonData.getString(key);
+		} catch (JSONException e) {
+			str = "";
 			e.printStackTrace();
 		}
 		return str;
@@ -862,7 +896,8 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 					drawable);
 		}
 
-		String snippet = lastCarInfo.getGps_time() + ",," + GetSystem.duration2String(duration*60);
+		String snippet = lastCarInfo.getGps_time() + ",,"
+				+ GetSystem.duration2String(duration * 60);
 
 		OverlayItem overLayItem = new OverlayItem(lastStopPoint, "t", snippet);
 
@@ -992,34 +1027,63 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	 * @author honesty
 	 * 
 	 */
-	class UpdateMain implements Runnable {
+	TimerTask task = new TimerTask() {
 		public void run() {
-			while (IsUpdateMain) {
-				int updateTime;
-				// 判断配置文件是否自动刷新
-				SharedPreferences preferences = getSharedPreferences(
-						Config.Shared_Preferences, Context.MODE_PRIVATE);
-				boolean isRef = preferences.getBoolean("isRef", true);
-				if (isRef) {
-					updateTime = (preferences.getInt("ShortTime", 30)) * 1000;
-				} else {
-					updateTime = 180000;
-				}
-				System.out.println("定时刷新时间：" + updateTime);
-				try {
-					Thread.sleep(updateTime);
-					// 判断是否程序运行在后台
-					if (!isPause) {
-						Message message = new Message();
-						message.what = UPDATEMAIN;
-						handler.sendMessage(message);
-					}
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+			// 判断是否程序运行在后台
+			if (!isPause) {
+				Message message = new Message();
+				message.what = UPDATEMAIN;
+				handler.sendMessage(message);
+				System.out.println("刷新时间：" + System.currentTimeMillis());
+				
 			}
 		}
+	};
+	
+	
+	public void startTimer(){
+		int updateTime;
+		// 判断配置文件是否自动刷新
+		SharedPreferences preferences = getSharedPreferences(
+				Config.Shared_Preferences, Context.MODE_PRIVATE);
+		boolean isRef = preferences.getBoolean("isRef", true);
+		if (isRef) {
+			updateTime = (preferences.getInt("ShortTime", 30)) * 1000;
+		} else {
+			updateTime = 180000;
+		}
+		timer  = new Timer();
+		timer.schedule(task, 100, updateTime);
 	}
+
+//	class UpdateMain implements Runnable {
+//		public void run() {
+//			while (IsUpdateMain) {
+//				int updateTime;
+//				// 判断配置文件是否自动刷新
+//				SharedPreferences preferences = getSharedPreferences(
+//						Config.Shared_Preferences, Context.MODE_PRIVATE);
+//				boolean isRef = preferences.getBoolean("isRef", true);
+//				if (isRef) {
+//					updateTime = (preferences.getInt("ShortTime", 30)) * 1000;
+//				} else {
+//					updateTime = 180000;
+//				}
+//				System.out.println("定时刷新时间：" + updateTime);
+//				try {
+//					Thread.currentThread().sleep(updateTime);
+//					// 判断是否程序运行在后台
+//					if (!isPause) {
+//						Message message = new Message();
+//						message.what = UPDATEMAIN;
+//						handler.sendMessage(message);
+//					}
+//				} catch (InterruptedException e) {
+//					e.printStackTrace();
+//				}
+//			}
+//		}
+//	}
 
 	/**
 	 * 显示全部车辆
@@ -1306,11 +1370,12 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 				long arg3) {
 			String Lat = carinfos.get((arg2 - 1)).getLat();
 			String Lon = carinfos.get((arg2 - 1)).getLon();
-			if(Lat.trim().equals("0") || Lon.trim().equals("0")){
-				Toast.makeText(AVTActivity.this, "暂无法读取位置信息", Toast.LENGTH_SHORT).show();
-				return ;
+			if (Lat.trim().equals("0") || Lon.trim().equals("0")) {
+				Toast.makeText(AVTActivity.this, "暂无法读取位置信息",
+						Toast.LENGTH_SHORT).show();
+				return;
 			}
-			
+
 			flipper.setDisplayedChild(1);
 			ChooseCar((arg2 - 1), 1);
 		}
@@ -1324,7 +1389,7 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	 *            0，地图 1，列表
 	 */
 	public void ChooseCar(int arg, int where) {
-		
+
 		lv_cars.setSelection(arg); // 定位到对应行
 		carAdapter.setSelectItem(arg);
 		carAdapter.notifyDataSetInvalidated();
@@ -1538,6 +1603,15 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 		IsUpdateMain = false;
 		ISSTARTBAR = false;
 		locationClient.stop();
+		if (timer != null) {
+
+			timer.cancel( );
+
+			timer = null;
+
+			}
+		
+		
 		System.gc();
 	}
 
@@ -1692,6 +1766,7 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 		MapAutoComplete = (AutoCompleteTextView) mapView
 				.findViewById(R.id.et_MapSearch);
 		MapAutoComplete.addTextChangedListener(new TextWatcher() {
+
 			public void onTextChanged(CharSequence s, int start, int before,
 					int count) {
 				if (s.length() > 0) {
@@ -1706,6 +1781,7 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 			}
 
 			public void afterTextChanged(Editable s) {
+
 			}
 
 		});
@@ -1739,9 +1815,8 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 		// 查找地址
 		mMKSearch = new MKSearch();
 		mMKSearch.init(mBMapMan, new MySearhListener());
-
-//		mMKSearchAddress = new MKSearch();
-//		mMKSearchAddress.init(mBMapMan, new ParkSearhListener());
+		// mMKSearchAddress = new MKSearch();
+		// mMKSearchAddress.init(mBMapMan, new ParkSearhListener());
 
 		GetMyLocation();
 	}
@@ -1774,6 +1849,9 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 		String url = Url + "customer/" + cust_id + "/customer?auth_code="
 				+ auth_code + "&tree_path=" + tree_path
 				+ "&page_no=1&page_count=100";
+
+		Log.i("AVTActivity", "获取用户信息" + url);
+
 		new Thread(new NetThread.GetDataThread(handler, url, GetContacter))
 				.start();
 		String poiUrl = Url + "customer/" + cust_id + "/poi?auth_code="
@@ -1803,9 +1881,7 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	 * @param overlays
 	 */
 	private void ClearCarParkOverlay() {
-		
-		
-		
+
 		if (carParkItemOverlay != null) {
 			carParkItemOverlay.clear();
 			mapOverLays.remove(carParkItemOverlay);
@@ -1831,7 +1907,7 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 					+ Car_Page_Number;
 			new Thread(new NetThread.GetDataThread(handler, url,
 					GetContacterCar)).start();
-			
+
 			Log.i("AVTActivity", "上拉加载");
 		}
 	}
@@ -1850,7 +1926,7 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 		public void onGetAddrResult(MKAddrInfo arg0, int arg1) {
 			if (arg0 != null) {
 				tv_address.setText(arg0.strAddr);
-				
+
 				if (carParkItemOverlay != null) {
 					carParkItemOverlay.setAddress(arg0.strAddr);
 				}
@@ -1931,11 +2007,19 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 			if (location != null) {
 				myLocation = new GeoPoint((int) (location.getLatitude() * 1e6),
 						(int) (location.getLongitude() * 1e6));
-				if (myOverlay != null) {
-					mapOverLays.remove(myOverlay); // 移除
-				}
-				myOverlay = new MyOverlay(myLocation);
-				mapOverLays.add(myOverlay); // 添加
+
+				new Handler().post(new Runnable() {
+
+					@Override
+					public void run() {
+						if (myOverlay != null) {
+							mapOverLays.remove(myOverlay); // 移除
+						}
+						myOverlay = new MyOverlay(myLocation);
+						mapOverLays.add(myOverlay); // 添加
+					}
+				});
+
 			} else {
 				System.out.println("location null");
 			}

@@ -231,7 +231,6 @@ public class LoginActivity extends Activity{
 			JSONObject jsonObject = new JSONObject(msg.obj.toString());
 			SharedPreferences preferences = getSharedPreferences(Config.Shared_Preferences, Context.MODE_PRIVATE);
 			Editor editor = preferences.edit();
-			
 			editor.putString("Verson", jsonObject.getString("version"));
 			editor.putString("VersonUrl", jsonObject.getString("app_path"));
 			editor.putString("logs", jsonObject.getString("logs"));
