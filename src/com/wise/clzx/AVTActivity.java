@@ -28,6 +28,7 @@ import com.baidu.mapapi.ItemizedOverlay;
 import com.baidu.mapapi.MKAddrInfo;
 import com.baidu.mapapi.MKBusLineResult;
 import com.baidu.mapapi.MKDrivingRouteResult;
+import com.baidu.mapapi.MKLocationManager;
 import com.baidu.mapapi.MKPoiResult;
 import com.baidu.mapapi.MKSearch;
 import com.baidu.mapapi.MKSearchListener;
@@ -117,6 +118,8 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	private final int GetNextLocus = 12; // 当前一段播放完毕，加载另一段
 
 	private final int SearchAddress = 13; // 根据坐标获取位置
+	private final int AnimateTo = 14; // 根据坐标获取位置
+	int updateTime;
 	// 控件
 	ViewFlipper flipper;
 	Spinner s_contacter;
@@ -229,14 +232,13 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	 */
 	boolean isTraffic = false;
 
-	
 	/**
 	 * 
 	 * Timer 刷新车辆定时器
 	 * 
 	 */
-	
-	Timer timer = null;
+
+	// Timer timer = null;
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -391,6 +393,7 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 										.getLon()));
 						mMKSearch.reverseGeocode(Point);
 						mMapController.animateTo(Point);
+
 					}
 				} else {
 					carAdapter.notifyDataSetChanged();
@@ -400,8 +403,10 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 				if (IsFristOnCreate) {
 					IsFristOnCreate = false;
 					// 开启刷新线程
-					//new Thread(new UpdateMain()).start();
-					startTimer();
+					// new Thread(new UpdateMain()).start();
+					// startTimer();
+					updateMain();
+
 				}
 				break;
 			case UPDATEMAIN:// 定时刷新所有车辆信息
@@ -419,14 +424,13 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 				}
 				break;
 			case GetRefreshData: // 解析更新数据并绑定
-				System.gc();
+				// System.gc();
 				jsonRefreshData(msg.obj.toString().trim());
 				if (!IsLock) {// 如果在轨迹回访不刷新数据
 					if (popView != null) {
 						popView.setVisibility(View.GONE);
 					}
 					LastPoint = Point;// 跟踪用到
-					System.out.println("刷新所有数据");
 					carAdapter.notifyDataSetChanged();// 刷新列表数据
 					// 当前车位置
 					if (carinfos.size() > 0) {
@@ -509,6 +513,21 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 			case SearchAddress:
 
 				break;
+			case AnimateTo:
+				Log.i("AVTActivity", "定位" + msg.arg1 + " " + msg.arg2);
+				Point = new GeoPoint(msg.arg1, msg.arg2);
+				new Handler().postDelayed(new Runnable(){
+					@Override
+					public void run() {
+						// 定位到当前坐标
+				        // 设置地图中心点
+						mMapController.animateTo(Point);
+					}
+					
+				}, 200);
+				
+				break;
+			
 			}
 		}
 	};
@@ -621,8 +640,6 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 				CarInfo carInfo = new CarInfo();
 				JSONObject json = jsonArray.getJSONObject(i);
 
-				Log.i("AVTActivity", "json:" + json);
-
 				carInfo.setObj_name(json.getString("obj_name"));
 				carInfo.setObjectID(json.getString("obj_id"));
 
@@ -677,6 +694,8 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 							jsonArrayAlerts, speed));
 					latestTime = GetSystem.LatestTime(latestTime, rcv_time);
 				}
+
+				Log.i("AVTActivity", "添加了一个:" + json.getString("obj_name"));
 				carNums.add(json.getString("obj_name"));
 				carinfos.add(carInfo);
 			}
@@ -690,10 +709,10 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	}
 
 	public String getNumString(JSONObject jsonData, String key) {
-		  boolean bool = jsonData.has(key);
-		   if(bool == false){
-			   return "0";
-		   }
+		boolean bool = jsonData.has(key);
+		if (bool == false) {
+			return "0";
+		}
 		String str = "0";
 		try {
 			str = jsonData.getString(key);
@@ -705,11 +724,11 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	}
 
 	public String getString(JSONObject jsonData, String key) {
-		
-	   boolean bool = jsonData.has(key);
-	   if(bool == false){
-		   return "";
-	   }
+
+		boolean bool = jsonData.has(key);
+		if (bool == false) {
+			return "";
+		}
 		String str = "";
 		try {
 			str = jsonData.getString(key);
@@ -1027,68 +1046,94 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	 * @author honesty
 	 * 
 	 */
-	TimerTask task = new TimerTask() {
-		public void run() {
-			// 判断是否程序运行在后台
-			if (!isPause) {
-				Message message = new Message();
-				message.what = UPDATEMAIN;
-				handler.sendMessage(message);
-				System.out.println("刷新时间：" + System.currentTimeMillis());
-				
+	// TimerTask task = new TimerTask() {
+	// public void run() {
+	// // 判断是否程序运行在后台
+	// if (!isPause) {
+	// Message message = new Message();
+	// message.what = UPDATEMAIN;
+	// handler.sendMessage(message);
+	// System.out.println("刷新时间：" + System.currentTimeMillis());
+	//
+	// }
+	// }
+	// };
+	//
+
+	// public void startTimer(){
+	// int updateTime;
+	// // 判断配置文件是否自动刷新
+	// SharedPreferences preferences = getSharedPreferences(
+	// Config.Shared_Preferences, Context.MODE_PRIVATE);
+	// boolean isRef = preferences.getBoolean("isRef", true);
+	// if (isRef) {
+	// updateTime = (preferences.getInt("ShortTime", 30)) * 1000;
+	// } else {
+	// updateTime = 180000;
+	// }
+	// timer = new Timer();
+	// timer.schedule(task,100, updateTime);
+	// }
+
+	public void updateMain() {
+		new Handler().postDelayed(new Runnable() {
+
+			@Override
+			public void run() {
+				if (IsUpdateMain) {
+					updateMain();
+
+				}
 			}
+
+		}, updateTime);
+
+		// 判断是否程序运行在后台
+		if (!isPause) {
+			Message message = new Message();
+			message.what = UPDATEMAIN;
+			handler.sendMessage(message);
+			Log.i("AVTActivity", "定时刷新");
+
 		}
-	};
-	
-	
-	public void startTimer(){
-		int updateTime;
-		// 判断配置文件是否自动刷新
-		SharedPreferences preferences = getSharedPreferences(
-				Config.Shared_Preferences, Context.MODE_PRIVATE);
-		boolean isRef = preferences.getBoolean("isRef", true);
-		if (isRef) {
-			updateTime = (preferences.getInt("ShortTime", 30)) * 1000;
-		} else {
-			updateTime = 180000;
-		}
-		timer  = new Timer();
-		timer.schedule(task, 100, updateTime);
+
 	}
 
-//	class UpdateMain implements Runnable {
-//		public void run() {
-//			while (IsUpdateMain) {
-//				int updateTime;
-//				// 判断配置文件是否自动刷新
-//				SharedPreferences preferences = getSharedPreferences(
-//						Config.Shared_Preferences, Context.MODE_PRIVATE);
-//				boolean isRef = preferences.getBoolean("isRef", true);
-//				if (isRef) {
-//					updateTime = (preferences.getInt("ShortTime", 30)) * 1000;
-//				} else {
-//					updateTime = 180000;
-//				}
-//				System.out.println("定时刷新时间：" + updateTime);
-//				try {
-//					Thread.currentThread().sleep(updateTime);
-//					// 判断是否程序运行在后台
-//					if (!isPause) {
-//						Message message = new Message();
-//						message.what = UPDATEMAIN;
-//						handler.sendMessage(message);
-//					}
-//				} catch (InterruptedException e) {
-//					e.printStackTrace();
-//				}
-//			}
-//		}
-//	}
+	class UpdateMain implements Runnable {
+		public void run() {
+			while (IsUpdateMain) {
+				int updateTime;
+				// 判断配置文件是否自动刷新
+				SharedPreferences preferences = getSharedPreferences(
+						Config.Shared_Preferences, Context.MODE_PRIVATE);
+				boolean isRef = preferences.getBoolean("isRef", true);
+				if (isRef) {
+					updateTime = (preferences.getInt("ShortTime", 30)) * 1000;
+				} else {
+					updateTime = 180000;
+				}
+				Log.i("AVTActivity", "定时刷新时间" + updateTime);
+				try {
+					Thread.currentThread().sleep(updateTime);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				// 判断是否程序运行在后台
+				if (!isPause) {
+					Message message = new Message();
+					message.what = UPDATEMAIN;
+					handler.sendMessage(message);
+				}
+
+			}
+		}
+	}
 
 	/**
 	 * 显示全部车辆
 	 */
 	private void ShowAllCar() {
+		Log.i("AVTActivity", "ShowAllCar");
 		ClearOverlay(carOverlays);// 删除汽车标记
 		HideLocaus();
 		for (int i = 0; i < carinfos.size(); i++) {
@@ -1139,6 +1184,7 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	 * 绑定自动感应控件
 	 */
 	private void bindData() {
+		Log.i("AVTActivity", "bindData");
 		// 绑定数据到AutoCompleteTextView
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
 				android.R.layout.simple_dropdown_item_1line, carNums);
@@ -1152,7 +1198,16 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 				for (int i = 0; i < carinfos.size(); i++) {
 					if (carinfos.get(i).getObj_name().equals(Regnum)) {
 						// 选中对应车辆
-						ChooseCar(i, 1);
+						final int carIndex = i;
+						new Handler().post(new Runnable() {
+
+							@Override
+							public void run() {
+								ChooseCar(carIndex, 1);
+							}
+
+						});
+
 						break;
 					}
 				}
@@ -1366,7 +1421,7 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	}
 
 	private OnItemClickListener OICL = new OnItemClickListener() {
-		public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
+		public void onItemClick(AdapterView<?> arg0, View arg1, final int arg2,
 				long arg3) {
 			String Lat = carinfos.get((arg2 - 1)).getLat();
 			String Lon = carinfos.get((arg2 - 1)).getLon();
@@ -1376,8 +1431,16 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 				return;
 			}
 
-			flipper.setDisplayedChild(1);
-			ChooseCar((arg2 - 1), 1);
+			new Handler().post(new Runnable() {
+
+				@Override
+				public void run() {
+					flipper.setDisplayedChild(1);
+					ChooseCar((arg2 - 1), 1);
+				}
+
+			});
+
 		}
 	};
 
@@ -1389,10 +1452,10 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	 *            0，地图 1，列表
 	 */
 	public void ChooseCar(int arg, int where) {
-
+		Log.i("AVTActivity", "ChooseCar");
 		lv_cars.setSelection(arg); // 定位到对应行
 		carAdapter.setSelectItem(arg);
-		carAdapter.notifyDataSetInvalidated();
+		carAdapter.notifyDataSetChanged();
 		if (arg != item) {
 			item = arg;
 			if (ISSEARCH) {// 如果在监控则停止监控
@@ -1412,19 +1475,30 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 				ShowAllCar();
 			}
 		}
-		// 定位到当前坐标
-		Point = new GeoPoint(AllStaticClass.StringToInt(carinfos.get(arg)
-				.getLat()), AllStaticClass.StringToInt(carinfos.get(arg)
-				.getLon()));
+		
+		
+		Message msg = new Message();
+		
+		int lat = AllStaticClass.StringToInt(carinfos.get(arg).getLat());
+		int lon = AllStaticClass.StringToInt(carinfos.get(arg).getLon());
+		msg.arg1 = lat;
+		msg.arg2 = lon;
+		msg.what = AnimateTo;
+		handler.sendMessage(msg);
 		mMKSearch.reverseGeocode(Point);
-		mMapController.animateTo(Point);
+
 		ShowPop(arg);
 	}
+	
+	
+	
 
 	private void ShowPop(int i) {
+		Log.i("AVTActivity", "ShowPop");
 		MapView.LayoutParams geoLP = (MapView.LayoutParams) popView
 				.getLayoutParams();
 		geoLP.point = Point;
+		Log.i("AVTActivity", "ShowPop1");
 		TextView tv_car_id = (TextView) popView.findViewById(R.id.pop_car_id);
 		tv_car_id.setVisibility(View.VISIBLE);
 		TextView my_line = (TextView) popView.findViewById(R.id.my_line);
@@ -1439,6 +1513,7 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 				.findViewById(R.id.pop_car_GpsTime);
 		TextView bt_menu_car = (TextView) popView
 				.findViewById(R.id.bt_menu_car);
+		Log.i("AVTActivity", "ShowPop2");
 		bt_menu_car.setVisibility(View.VISIBLE);
 		bt_menu_car.getPaint().setFlags(Paint.UNDERLINE_TEXT_FLAG);
 		bt_menu_car.getPaint().setAntiAlias(true);
@@ -1449,6 +1524,7 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 		bt_monitor_locus.getPaint().setFlags(Paint.UNDERLINE_TEXT_FLAG);
 		bt_monitor_locus.getPaint().setAntiAlias(true);
 		bt_monitor_locus.setOnClickListener(OCL);
+		Log.i("AVTActivity", "ShowPop3");
 		int Speed = carinfos.get(i).getSpeed();
 		String RegNum = carinfos.get(i).getObj_name();
 		String MSTStatus = carinfos.get(i).getMDTStatus();
@@ -1462,6 +1538,7 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 		tv_car_fuel.setText(getString(R.string.car_fuel)
 				+ carinfos.get(i).getFuel() + "L");
 		mMapView.updateViewLayout(popView, geoLP);
+		Log.i("AVTActivity", "ShowPop4");
 		popView.setVisibility(View.VISIBLE);
 	}
 
@@ -1603,15 +1680,15 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 		IsUpdateMain = false;
 		ISSTARTBAR = false;
 		locationClient.stop();
-		if (timer != null) {
+		// if (timer != null) {
+		//
+		// timer.cancel( );
+		//
+		// timer = null;
+		//
+		// }
+		//
 
-			timer.cancel( );
-
-			timer = null;
-
-			}
-		
-		
 		System.gc();
 	}
 
@@ -1741,6 +1818,17 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 			public void afterTextChanged(Editable s) {
 			}
 		});
+
+		// 判断配置文件是否自动刷新
+		SharedPreferences preferences = getSharedPreferences(
+				Config.Shared_Preferences, Context.MODE_PRIVATE);
+		boolean isRef = preferences.getBoolean("isRef", true);
+		if (isRef) {
+			updateTime = (preferences.getInt("ShortTime", 30)) * 1000;
+		} else {
+			updateTime = 180000;
+		}
+
 		// 地图
 		View mapView = mLayoutInflater.inflate(R.layout.map, null);
 		flipper.addView(mapView);
@@ -1801,14 +1889,21 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 		flipper.setDisplayedChild(1);
 
 		mBMapMan = new BMapManager(getApplication());
+
 		mBMapMan.init("934B1BF7DD618B5E356CA715D473D1BD864048AC", null);
 		super.initMapActivity(mBMapMan);
+		//
+		// // 初始化Location模块
+		// MKLocationManager mLocationManager = mBMapMan.getLocationManager();
+		// // 通过enableProvider和disableProvider方法，选择定位的Provider
+		// mLocationManager.enableProvider(MKLocationManager.MK_NETWORK_PROVIDER);
+
 		mMapView = (MapView) findViewById(R.id.MapView);
 		mMapView.setBuiltInZoomControls(false); // 设置启用内置的缩放控件
 		mMapView.setSatellite(IsSatellite);
 		mMapView.setTraffic(false);
 		// 设置在缩放动画过程中也显示overlay,默认为不绘制
-		mMapView.setDrawOverlayWhenZooming(true);
+		mMapView.setDrawOverlayWhenZooming(false);
 		mMapController = mMapView.getController(); // 得到mMapView的控制权,可以用它控制和驱动平移和缩放
 		mapOverLays = mMapView.getOverlays();
 		getDate();
@@ -1867,6 +1962,8 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	 * @param overlays
 	 */
 	private void ClearOverlay(List<Overlay> overlays) {
+		Log.i("AVTActivity", "ClearOverlay");
+
 		for (Overlay overlay : overlays) {
 			mapOverLays.remove(overlay);
 		}
@@ -1926,7 +2023,6 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 		public void onGetAddrResult(MKAddrInfo arg0, int arg1) {
 			if (arg0 != null) {
 				tv_address.setText(arg0.strAddr);
-
 				if (carParkItemOverlay != null) {
 					carParkItemOverlay.setAddress(arg0.strAddr);
 				}
@@ -1991,6 +2087,7 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 	}
 
 	private void GetMyLocation() {
+		Log.i("AVTActivity", "GetMyLocation");
 		locationClient = new LocationClient(getApplicationContext());
 		locationClient.registerLocationListener(new MyLocationListenner());
 		LocationClientOption option = new LocationClientOption();
@@ -2005,6 +2102,8 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 		@Override
 		public void onReceiveLocation(BDLocation location) {
 			if (location != null) {
+
+				Log.i("AVTActivity", "MyLocationListenner");
 				myLocation = new GeoPoint((int) (location.getLatitude() * 1e6),
 						(int) (location.getLongitude() * 1e6));
 
