@@ -513,20 +513,6 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 			case SearchAddress:
 
 				break;
-			case AnimateTo:
-				Log.i("AVTActivity", "定位" + msg.arg1 + " " + msg.arg2);
-				Point = new GeoPoint(msg.arg1, msg.arg2);
-				new Handler().postDelayed(new Runnable(){
-					@Override
-					public void run() {
-						// 定位到当前坐标
-				        // 设置地图中心点
-						mMapController.animateTo(Point);
-					}
-					
-				}, 200);
-				
-				break;
 			
 			}
 		}
@@ -1477,14 +1463,11 @@ public class AVTActivity extends MapActivity implements IXListViewListener {
 		}
 		
 		
-		Message msg = new Message();
-		
 		int lat = AllStaticClass.StringToInt(carinfos.get(arg).getLat());
 		int lon = AllStaticClass.StringToInt(carinfos.get(arg).getLon());
-		msg.arg1 = lat;
-		msg.arg2 = lon;
-		msg.what = AnimateTo;
-		handler.sendMessage(msg);
+		Point = new GeoPoint(lat,lon);
+        // 设置地图中心点
+		mMapController.animateTo(Point);
 		mMKSearch.reverseGeocode(Point);
 
 		ShowPop(arg);
